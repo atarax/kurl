@@ -1,0 +1,78 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "kurl.fullname" . }}
+  labels:
+    app: {{ template "kurl.name" . }}
+    chart: {{ template "kurl.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "kurl.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "kurl.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      volumes:
+      - name: confd-config-volume
+        configMap:
+          name: {{ template "kurl.fullname" . }}-confd-config
+      - name: confd-templates-volume
+        configMap:
+          name: {{ template "kurl.fullname" . }}-confd-templates
+      containers:
+        - name: confd
+          volumeMounts:
+          - name: confd-config-volume
+            mountPath: '/etc/confd/conf.d'
+          - name: confd-templates-volume
+            mountPath: '/etc/confd/templates'
+          image: "{{ .Values.confd_image.repository }}:{{ .Values.confd_image.tag }}"
+          env:
+          - name: ETCD_NODE
+            value: {{ template "kurl.fullname" . }}-etcd
+          - name: ETCD_PORT
+            value: '{{ .Values.service.etcd_client.port }}'
+        - name: etcd0
+          image: "{{ .Values.etcd_image.repository }}:{{ .Values.etcd_image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+          - /usr/local/bin/etcd
+          - --name
+          - etcd0
+          - --advertise-client-urls
+          - http://{{ template "kurl.fullname" . }}-etcd:{{ .Values.service.etcd_client.port }}
+          - --listen-client-urls
+          - http://0.0.0.0:{{ .Values.service.etcd_client.port }}
+          - --initial-advertise-peer-urls
+          - http://{{ template "kurl.fullname" . }}-etcd:{{ .Values.service.etcd_peer.port }}
+          - --listen-peer-urls
+          - http://0.0.0.0:{{ .Values.service.etcd_peer.port }}
+          - --initial-cluster-token
+          - etcd-cluster-1
+          - --initial-cluster
+          - etcd0=http://{{ template "kurl.fullname" . }}-etcd:{{ .Values.service.etcd_peer.port }}
+          - --initial-cluster-state
+          - new
+          ports:
+          - containerPort: 2379
+            name: client
+            protocol: TCP
+          - containerPort: 2380
+            name: server
+            protocol: TCP
+#          livenessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+#          readinessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+
