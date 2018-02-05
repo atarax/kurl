@@ -2,13 +2,29 @@ defaults
   log     global
   mode    http
 
-listen frontend 0.0.0.0:8080
-  mode http
-  stats enable
-  stats uri /haproxy?stats
-  balance roundrobin
-  option httpclose
-  option forwardfor
+frontend http-in
+  acl is_jenkins hdr_end(host) jenkins.atarax.me
+
   {{range gets "/services/*"}}
-    server {{base .Key}} {{.Value}} check
+  {{$data := json .Value}}
+  acl is_service_{{$data.name}}_{{$data.hostPort}} hdr_end(host) {{$data.alias}}.atarax.me dst_port {{$data.hostPort}}
+  bind *:{{$data.hostPort}}
   {{end}}
+
+  bind *:80
+
+  {{range gets "/services/*"}}
+  {{$data := json .Value}}
+  use_backend service_{{$data.name}}_{{$data.hostPort}}_backend if is_service_{{$data.name}}_{{$data.hostPort}}
+  {{end}}
+
+  default_backend jenkins
+
+backend jenkins
+  server node1 2.atarax.me:8080
+
+{{range gets "/services/*"}}
+{{$data := json .Value}}
+backend service_{{$data.name}}_{{$data.hostPort}}_backend
+  server service_{{$data.name}}_{{$data.hostPort}}_backend 2.atarax.me:{{$data.containerPort}}
+{{end}}
