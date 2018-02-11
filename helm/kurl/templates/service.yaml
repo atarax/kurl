@@ -10,14 +10,31 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.etcd_client.port }}
-      targetPort: 2379
+    - port: 2379
       protocol: TCP
       name: etcd-client
-    - port: {{ .Values.service.etcd_peer.port }}
-      targetPort: 2380
+    - port: 2380
       protocol: TCP
       name: etcd-server
+  selector:
+    app: {{ template "kurl.name" . }}
+    release: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kurl.fullname" . }}-nginx
+  labels:
+    app: {{ template "kurl.name" . }}
+    chart: {{ template "kurl.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 80
+      protocol: TCP
+      name: etcd-client
   selector:
     app: {{ template "kurl.name" . }}
     release: {{ .Release.Name }}

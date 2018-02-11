@@ -7,7 +7,7 @@ frontend http-in
 
   {{range gets "/services/*"}}
   {{$data := json .Value}}
-  acl is_service_{{$data.name}}_{{$data.hostPort}} hdr_end(host) {{$data.alias}}.atarax.me dst_port {{$data.hostPort}}
+  acl is_service_{{$data.name}} hdr_end(host) {{$data.alias}}.atarax.me dst_port
   bind *:{{$data.hostPort}}
   {{end}}
 
@@ -15,7 +15,7 @@ frontend http-in
 
   {{range gets "/services/*"}}
   {{$data := json .Value}}
-  use_backend service_{{$data.name}}_{{$data.hostPort}}_backend if is_service_{{$data.name}}_{{$data.hostPort}}
+  use_backend service_{{$data.name}}_{{$data.hostPort}}_backend if is_service_{{$dajta.name}}_{{$data.hostPort}}
   {{end}}
 
   default_backend jenkins

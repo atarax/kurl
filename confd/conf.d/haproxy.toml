@@ -1,9 +1,0 @@
-[template]
-src = "haproxy.cfg.tmpl"
-dest = "/tmp/haproxy.cfg"
-#dest = "/etc/haproxy/haproxy.cfg"
-keys = [
-  "/app/services",
-]
-reload_cmd = "echo foo >> /tmp/blubb"
-#reload_cmd = "/usr/sbin/service haproxy reload"

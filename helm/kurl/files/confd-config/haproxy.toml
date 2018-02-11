@@ -1,6 +1,6 @@
 [template]
 src = "haproxy.cfg.tmpl"
-dest = "/tmp/myconfig.conf"
+dest = "/etc/haproxy/haproxy.cfg"
 keys = [
     "/services"
 ]

@@ -19,6 +19,7 @@ spec:
         app: {{ template "kurl.name" . }}
         release: {{ .Release.Name }}
     spec:
+
       volumes:
       - name: confd-config-volume
         configMap:
@@ -26,19 +27,35 @@ spec:
       - name: confd-templates-volume
         configMap:
           name: {{ template "kurl.fullname" . }}-confd-templates
+
       containers:
-        - name: confd
+
+        - name: nginx
+          image: nginx
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          - containerPort: 80
+            name: http
+            protocol: TCP
+
+        - name: php
+          image: "{{ .Values.kurl_image.repository }}:{{ .Values.kurl_image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+        - name: confd-haproxy
+          image: "{{ .Values.confd_haproxy_image.repository }}:{{ .Values.confd_haproxy_image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
           - name: confd-config-volume
             mountPath: '/etc/confd/conf.d'
           - name: confd-templates-volume
             mountPath: '/etc/confd/templates'
-          image: "{{ .Values.confd_image.repository }}:{{ .Values.confd_image.tag }}"
           env:
           - name: ETCD_NODE
             value: {{ template "kurl.fullname" . }}-etcd
           - name: ETCD_PORT
             value: '{{ .Values.service.etcd_client.port }}'
+
         - name: etcd0
           image: "{{ .Values.etcd_image.repository }}:{{ .Values.etcd_image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
