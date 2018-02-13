@@ -29,11 +29,11 @@ service:
 ingress:
   enabled: yes
   annotations:
-    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: istio
     kubernetes.io/tls-acme: "true"
   path: /
   hosts:
-    - etcd.k8l.atarax.me
+    - etcd.k8l.atarax.
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
